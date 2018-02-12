@@ -146,4 +146,9 @@ class Image extends \yii\db\ActiveRecord
         }
     }
 
+    public function __toString()
+    {
+        return $this->fileName;
+    }
+
 }

@@ -4,6 +4,7 @@ namespace image\behaviors;
 
 use yii\base\Behavior;
 use yii\db\BaseActiveRecord;
+use yii\validators\Validator;
 use image\models\Image;
 use image\models\DefaultImage;
 use image\traits\getModuleTrait;
@@ -23,6 +24,13 @@ class ImageBehavior extends Behavior
             BaseActiveRecord::EVENT_AFTER_UPDATE => 'afterUpdate',
             BaseActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
         ];
+    }
+
+    public function attach($owner)
+    {
+        parent::attach($owner);
+
+        $owner->validators[] = Validator::createValidator('safe', $this->owner, ['image', 'images']);
     }
 
     public function beforeUpdate($event)
@@ -83,12 +91,42 @@ class ImageBehavior extends Behavior
         ])) ? $image : new DefaultImage;
     }
 
+    public function setImage($fileName)
+    {
+        if(!empty($fileName) AND strval($image = $this->image) != $fileName){
+            if(!($image instanceof DefaultImage)){
+                $image->delete();
+            }
+
+            $this->addImage($fileName);
+        }
+    }
+
     public function getImages()
     {
         return Image::find()->where([
             'modelClass' => get_class($this->owner),
             'modelPrimaryKey' => serialize($this->owner->getPrimaryKey(TRUE)),
         ])->all();
+    }
+
+    public function setImages($fileNameList)
+    {
+        if(!empty($fileNameList)){
+            array_walk($images = $this->images, function(&$item, $index){
+                $item = strval($item);
+            });
+
+            $diff = array_diff($fileNameList, $images);
+
+            if(!empty($diff)){
+                $this->deleteImages();
+
+                foreach($fileNameList as $fileName){
+                    $this->addImage($fileName);
+                }
+            }
+        }
     }
 
     public function deleteImages()
