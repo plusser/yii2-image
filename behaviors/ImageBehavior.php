@@ -99,6 +99,8 @@ class ImageBehavior extends Behavior
             }
 
             $this->addImage($fileName);
+        }elseif(empty($fileName) AND get_class($image = $this->image) != DefaultImage::className()){
+            $image->delete();
         }
     }
 
@@ -125,6 +127,10 @@ class ImageBehavior extends Behavior
                 foreach($fileNameList as $fileName){
                     $this->addImage($fileName);
                 }
+            }
+        }elseif(count($images = $this->images)){
+            foreach($images as $item){
+                $item->delete();
             }
         }
     }
